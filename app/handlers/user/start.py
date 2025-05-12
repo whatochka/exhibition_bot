@@ -69,15 +69,16 @@ async def open_zone(message: Message, state: FSMContext, zone_id: int, zones: li
     next_id = zones[current_index + 1].id if current_index < total - 1 else "finish"
 
     text = f"<b>{zone.title}</b>\n\n{zone.description}"
-
-    if subzones:
-        kb = subzones_keyboard(subzones, prev_id, next_id)
-    else:
-        kb = user_navigation_keyboard(prev_id, next_id)
+    kb = subzones_keyboard(subzones, prev_id, next_id) if subzones else user_navigation_keyboard(prev_id, next_id)
 
     try:
-        await message.edit_text(text, parse_mode="HTML", reply_markup=kb)
+        await message.delete()
     except:
+        pass  # вдруг сообщение уже удалено
+
+    if zone.image_path:
+        await message.answer_photo(photo=zone.image_path, caption=text, parse_mode="HTML", reply_markup=kb)
+    else:
         await message.answer(text, parse_mode="HTML", reply_markup=kb)
 
 
@@ -93,10 +94,16 @@ async def zone_next(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     next_part = callback.data.split(":")[1]
     if next_part == "finish":
-        await callback.message.edit_text(
+        try:
+            await callback.message.delete()
+        except:
+            pass
+
+        await callback.message.answer(
             "🎉 Спасибо за участие в интерактивной выставке!",
             reply_markup=final_keyboard()
         )
+
     else:
         next_id = int(next_part)
         await open_zone(callback.message, state, next_id)
@@ -113,7 +120,16 @@ async def open_subzone(callback: CallbackQuery):
 
     text = f"<b>{subzone.title}</b>\n\n{subzone.description}"
     kb = items_keyboard(items, back_cb=f"zone_open:{subzone.zone_id}")
-    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=kb)
+
+    try:
+        await callback.message.delete()
+    except:
+        pass
+
+    if subzone.photo:
+        await callback.message.answer_photo(photo=subzone.photo, caption=text, parse_mode="HTML", reply_markup=kb)
+    else:
+        await callback.message.answer(text, parse_mode="HTML", reply_markup=kb)
 
 
 @user_router.callback_query(F.data.startswith("user_item:"))
@@ -138,15 +154,17 @@ async def open_user_item(callback: CallbackQuery, state: FSMContext):
                 await state.update_data(current_zone_id=subzone.zone_id)
 
     text = f"<b>{item.title}</b>\n\n{item.description}"
-    keyboard = user_menu_keyboard("user_items_back")  # фикс
+    keyboard = user_menu_keyboard("user_items_back")
 
     try:
-        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=keyboard)
+        await callback.message.delete()
     except:
-        await callback.message.answer(text, parse_mode="HTML", reply_markup=keyboard)
+        pass
 
     if item.photo:
-        await callback.message.answer_photo(photo=item.photo)
+        await callback.message.answer_photo(photo=item.photo, caption=text, parse_mode="HTML", reply_markup=keyboard)
+    else:
+        await callback.message.answer(text, parse_mode="HTML", reply_markup=keyboard)
 
     if item.voice:
         await callback.message.answer_voice(voice=item.voice)
@@ -203,9 +221,14 @@ async def user_items_back(callback: CallbackQuery, state: FSMContext):
         items = (await session.execute(select(Item).where(Item.subzone_id == subzone_id))).scalars().all()
 
     text = f"<b>{subzone.title}</b>\n\n{subzone.description}"
-    keyboard = items_keyboard(items, back_cb=f"zone_open:{subzone.zone_id}")  # исправили на items_keyboard
+    keyboard = items_keyboard(items, back_cb=f"zone_open:{subzone.zone_id}")
 
     try:
-        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=keyboard)
+        await callback.message.delete()
     except:
+        pass
+
+    if subzone.photo:
+        await callback.message.answer_photo(photo=subzone.photo, caption=text, parse_mode="HTML", reply_markup=keyboard)
+    else:
         await callback.message.answer(text, parse_mode="HTML", reply_markup=keyboard)
