@@ -5,6 +5,9 @@ from io import BytesIO
 import qrcode
 from qrcode.image.pil import PilImage
 
+from app.keyboards.admin_items import items_list_keyboard
+from app.models.item import Item
+
 from app.models.zone import Zone
 from app.config import BOT_USERNAME
 from app.utils.db import SessionLocal
@@ -44,7 +47,7 @@ async def view_zone(callback: CallbackQuery):
         zone = await session.get(Zone, zone_id)
 
     if not zone:
-        await callback.message.answer("❗️Зона не найдена.")
+        await callback.message.answer("❗️Зона не найденаааа.")
         return
 
     text = f"<b>{zone.title}</b>\n\n{zone.description}"
@@ -102,29 +105,4 @@ async def send_qr_code(callback: CallbackQuery):
         document=image,
         caption=f"📎 QR-код для зоны #{zone_id}\n\n🔗 {link}",
         reply_markup=qr_back_to_card_keyboard(zone_id),
-    )
-
-
-@zone_router.callback_query(F.data.startswith("zone_items:"))
-async def zone_items(callback: CallbackQuery):
-    from app.keyboards.admin_items import items_list_keyboard
-    from app.models.item import Item
-
-    await callback.answer()
-    zone_id = int(callback.data.split(":")[1])
-
-    async with SessionLocal() as session:
-        zone = await session.get(Zone, zone_id)
-        result = await session.execute(select(Item).where(Item.zone_id == zone_id))
-        items = result.scalars().all()
-
-    try:
-        await callback.message.delete()
-    except:
-        pass
-
-    await callback.message.bot.send_message(
-        chat_id=callback.from_user.id,
-        text=f"📦 Список предметов в зоне <b>{zone.title}</b>:",
-        reply_markup=items_list_keyboard(zone_id, items),
     )

@@ -1,7 +1,6 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
 from sqlalchemy import select
 
 from app.models import Item
@@ -10,16 +9,10 @@ from app.keyboards.admin_items import (
     items_list_keyboard,
     item_cancel_keyboard
 )
-from app.services.voice_handler_service import handle_voice_input
+from app.states.item import ItemCreate
+
 
 item_create_router = Router()
-
-
-class ItemCreate(StatesGroup):
-    title = State()
-    description = State()
-    image = State()
-    voice = State()
 
 
 @item_create_router.callback_query(F.data.startswith("item_create:"))
@@ -69,16 +62,11 @@ async def skip_voice_create(message: Message, state: FSMContext):
     await finish_create(message, state)
 
 
-@item_create_router.message(ItemCreate.voice, F.voice | F.audio)
-async def voice_create(message: Message, state: FSMContext):
-    await handle_voice_input(message, state, message.bot, finish_create)
-
-
 async def finish_create(message: Message, state: FSMContext):
     data = await state.get_data()
     async with SessionLocal() as session:
         item = Item(
-            zone_id=data["zone_id"],
+            subzone_id=data["zone_id"],
             title=data["title"],
             description=data["description"],
             photo=data.get("image"),
@@ -86,7 +74,7 @@ async def finish_create(message: Message, state: FSMContext):
         )
         session.add(item)
         await session.commit()
-        result = await session.execute(select(Item).where(Item.zone_id == data["zone_id"]))
+        result = await session.execute(select(Item).where(Item.subzone_id == data["zone_id"]))
         items = result.scalars().all()
     await state.clear()
     await message.answer("✅ Предмет создан!", reply_markup=items_list_keyboard(data["zone_id"], items))
@@ -99,6 +87,6 @@ async def cancel_create(callback: CallbackQuery, state: FSMContext):
     zone_id = data.get("zone_id")
     await state.clear()
     async with SessionLocal() as session:
-        result = await session.execute(select(Item).where(Item.zone_id == zone_id))
+        result = await session.execute(select(Item).where(Item.subzone_id == zone_id))
         items = result.scalars().all()
     await callback.message.edit_text("❌ Создание предмета отменено.", reply_markup=items_list_keyboard(zone_id, items))

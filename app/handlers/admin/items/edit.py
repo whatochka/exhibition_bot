@@ -11,7 +11,6 @@ from app.keyboards.admin_items import (
     item_detail_keyboard,
     item_cancel_keyboard
 )
-from app.services.voice_handler_service import handle_voice_input
 
 item_edit_router = Router()
 
@@ -35,12 +34,14 @@ async def start_edit(callback: CallbackQuery, state: FSMContext):
             return
 
     await state.set_state(ItemEdit.title)
-    await state.update_data(item_id=item_id, zone_id=item.zone_id, step="title")
+    await state.update_data(item_id=item_id, zone_id=item.id, step="title")
 
     try:
-        await callback.message.edit_text("✏️ Введите новое название предмета:", reply_markup=item_cancel_keyboard("item_edit_cancel"))
+        await callback.message.edit_text("✏️ Введите новое название предмета:",
+                                         reply_markup=item_cancel_keyboard("item_edit_cancel"))
     except:
-        await callback.message.answer("✏️ Введите новое название предмета:", reply_markup=item_cancel_keyboard("item_edit_cancel"))
+        await callback.message.answer("✏️ Введите новое название предмета:",
+                                      reply_markup=item_cancel_keyboard("item_edit_cancel"))
         try:
             await callback.message.delete()
         except:
@@ -58,7 +59,8 @@ async def set_new_title(message: Message, state: FSMContext):
 async def set_new_description(message: Message, state: FSMContext):
     await state.update_data(description=message.text, step="photo")
     await state.set_state(ItemEdit.photo)
-    await message.answer("🖼 Отправьте новое изображение (или напишите 'нет'):", reply_markup=item_cancel_keyboard("item_edit_cancel"))
+    await message.answer("🖼 Отправьте новое изображение (или напишите 'нет'):",
+                         reply_markup=item_cancel_keyboard("item_edit_cancel"))
 
 
 @item_edit_router.message(ItemEdit.photo)
@@ -72,18 +74,21 @@ async def set_new_photo(message: Message, state: FSMContext):
         return
 
     await state.set_state(ItemEdit.voice)
-    await message.answer("🎤 Отправьте новое голосовое сообщение (или напишите 'нет'):", reply_markup=item_cancel_keyboard("item_edit_cancel"))
+    await message.answer("🎤 Отправьте новое голосовое сообщение (или напишите 'нет'):",
+                         reply_markup=item_cancel_keyboard("item_edit_cancel"))
 
 
 @item_edit_router.message(ItemEdit.voice)
 async def set_new_voice(message: Message, state: FSMContext):
-    if message.text and message.text.lower() == "нет":
+    if message.voice:
+        await state.update_data(voice=message.voice.file_id)
+    elif message.text.lower() == "нет":
         await state.update_data(voice=None)
-        await finish_edit(message, state)
-    elif message.voice or message.audio:
-        await handle_voice_input(message, state, message.bot, finish_edit)
     else:
         await message.answer("❗ Отправьте голосовое сообщение или напишите 'нет'")
+        return
+
+    await finish_edit(message, state)
 
 
 @item_edit_router.callback_query(F.data == "item_edit_cancel")
@@ -95,7 +100,7 @@ async def cancel_edit(callback: CallbackQuery, state: FSMContext):
 
     if zone_id:
         async with SessionLocal() as session:
-            result = await session.execute(select(Item).where(Item.zone_id == zone_id))
+            result = await session.execute(select(Item).where(Item.id == zone_id))
             items = result.scalars().all()
 
         try:

@@ -1,14 +1,14 @@
 from aiogram.fsm.state import StatesGroup, State
 
 
-class ZoneCreate(StatesGroup):
+class SubzoneCreate(StatesGroup):
     title = State()
     description = State()
     image = State()
     voice = State()
 
 
-class ZoneEdit(StatesGroup):
+class SubzoneEdit(StatesGroup):
     title = State()
     description = State()
     image = State()

@@ -19,7 +19,6 @@ async def admin_panel(callback: CallbackQuery):
         result = await session.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
 
-        # Суперпользователь всегда админ
         if user_id == SUPERUSER_ID:
             if not user:
                 user = User(id=user_id, full_name=full_name, is_admin=True)

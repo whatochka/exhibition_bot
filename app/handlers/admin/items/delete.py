@@ -44,10 +44,10 @@ async def delete_item(callback: CallbackQuery):
 
     async with SessionLocal() as session:
         item = await session.get(Item, item_id)
-        zone_id = item.zone_id
+        zone_id = item.subzone_id
         await session.delete(item)
         await session.commit()
-        result = await session.execute(select(Item).where(Item.zone_id == zone_id))
+        result = await session.execute(select(Item).where(Item.subzone_id == zone_id))
         items = result.scalars().all()
 
     try:

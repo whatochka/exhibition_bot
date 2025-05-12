@@ -1,20 +1,13 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
 
 from app.models import Zone
 from app.utils.db import SessionLocal
 from app.keyboards.admin_zones import zone_actions_keyboard, cancel_keyboard
+from app.states.zone import ZoneEdit
 
 zone_router = Router()
-
-
-class ZoneEdit(StatesGroup):
-    title = State()
-    description = State()
-    image = State()
-    voice = State()
 
 
 @zone_router.callback_query(F.data.startswith("zone_edit:"))

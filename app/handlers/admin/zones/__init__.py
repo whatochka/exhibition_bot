@@ -12,6 +12,13 @@ from app.handlers.admin.items import (
     item_delete_router
 )
 
+from app.handlers.admin.subzones import (
+    subzone_create_router,
+    subzone_view_router,
+    subzone_delete_router,
+    subzone_edit_router
+)
+
 admin_router = Router()
 admin_router.include_router(view_router)
 admin_router.include_router(delete_router)
@@ -22,3 +29,8 @@ admin_router.include_router(item_router)
 admin_router.include_router(item_create_router)
 admin_router.include_router(item_edit_router)
 admin_router.include_router(item_delete_router)
+
+admin_router.include_router(subzone_create_router)
+admin_router.include_router(subzone_view_router)
+admin_router.include_router(subzone_edit_router)
+admin_router.include_router(subzone_delete_router)

@@ -12,4 +12,4 @@ class Zone(Base):
     description: Mapped[str] = mapped_column(Text)
     image_path: Mapped[str | None] = mapped_column(nullable=True)
     voice_path: Mapped[str | None] = mapped_column(nullable=True)
-    items = relationship("Item", back_populates="zone", cascade="all, delete")
+    subzones = relationship("Subzone", back_populates="zone", cascade="all, delete")

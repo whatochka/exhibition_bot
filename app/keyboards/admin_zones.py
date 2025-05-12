@@ -15,7 +15,8 @@ def zone_list_keyboard(zones: list[Zone]) -> InlineKeyboardMarkup:
 def zone_actions_keyboard(zone_id: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="✏️ Редактировать", callback_data=f"zone_edit:{zone_id}")],
-        [InlineKeyboardButton(text="📦 Предметы", callback_data=f"zone_items:{zone_id}")],
+#        [InlineKeyboardButton(text="⏩ Подзоны", callback_data=f"zone_items:{zone_id}")],
+        [InlineKeyboardButton(text="⏩ Подзоны", callback_data=f"zone_subzones:{zone_id}")],
         [InlineKeyboardButton(text="🗑 Удалить", callback_data=f"zone_delete:{zone_id}")],
         [InlineKeyboardButton(text="📎 QR-код", callback_data=f"zone_qr:{zone_id}")],
         [InlineKeyboardButton(text="🔙 Назад", callback_data="admin_zones")]

@@ -18,26 +18,26 @@ zone_router = Router()
 @zone_router.callback_query(F.data == "zone_add")
 async def start_zone_add(callback: CallbackQuery, state: FSMContext):
     await state.clear()
-    await state.set_state(ZoneCreate.waiting_for_title)
+    await state.set_state(ZoneCreate.title)
     await state.update_data(step="title")
     await callback.message.edit_text("📝 Введите название зоны:", reply_markup=cancel_keyboard())
 
 
-@zone_router.message(ZoneCreate.waiting_for_title)
+@zone_router.message(ZoneCreate.title)
 async def set_title(message: Message, state: FSMContext):
     await state.update_data(title=message.text, step="description")
-    await state.set_state(ZoneCreate.waiting_for_description)
+    await state.set_state(ZoneCreate.description)
     await message.answer("📝 Введите описание зоны:", reply_markup=back_or_cancel_keyboard())
 
 
-@zone_router.message(ZoneCreate.waiting_for_description)
+@zone_router.message(ZoneCreate.description)
 async def set_description(message: Message, state: FSMContext):
     await state.update_data(description=message.text, step="image")
-    await state.set_state(ZoneCreate.waiting_for_image)
+    await state.set_state(ZoneCreate.image)
     await message.answer("📷 Отправьте изображение (или напишите 'нет'):", reply_markup=back_or_cancel_keyboard())
 
 
-@zone_router.message(ZoneCreate.waiting_for_image)
+@zone_router.message(ZoneCreate.image)
 async def set_image(message: Message, state: FSMContext):
     image_path = None
     if message.photo:
@@ -47,12 +47,12 @@ async def set_image(message: Message, state: FSMContext):
         return
 
     await state.update_data(image_path=image_path, step="voice")
-    await state.set_state(ZoneCreate.waiting_for_voice)
+    await state.set_state(ZoneCreate.voice)
     await message.answer("🎙 Отправьте голосовое сообщение (или напишите 'нет'):",
                          reply_markup=back_or_cancel_keyboard())
 
 
-@zone_router.message(ZoneCreate.waiting_for_voice)
+@zone_router.message(ZoneCreate.voice)
 async def set_voice(message: Message, state: FSMContext):
     voice_path = None
     if message.voice:
@@ -85,17 +85,17 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
     step = data.get("step")
 
     if step == "description":
-        await state.set_state(ZoneCreate.waiting_for_title)
+        await state.set_state(ZoneCreate.title)
         await state.update_data(step="title")
         await callback.message.edit_text("📝 Введите название зоны:", reply_markup=cancel_keyboard())
 
     elif step == "image":
-        await state.set_state(ZoneCreate.waiting_for_description)
+        await state.set_state(ZoneCreate.description)
         await state.update_data(step="description")
         await callback.message.edit_text("📝 Введите описание зоны:", reply_markup=back_or_cancel_keyboard())
 
     elif step == "voice":
-        await state.set_state(ZoneCreate.waiting_for_image)
+        await state.set_state(ZoneCreate.image)
         await state.update_data(step="image")
         await callback.message.edit_text("📷 Отправьте изображение (или напишите 'нет'):",
                                          reply_markup=back_or_cancel_keyboard())

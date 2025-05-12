@@ -11,7 +11,7 @@ def items_list_keyboard(zone_id: int, items: list) -> InlineKeyboardMarkup:
         InlineKeyboardButton(text="➕ Добавить предмет", callback_data=f"item_create:{zone_id}")
     ])
     keyboard.append([
-        InlineKeyboardButton(text="🔙 Назад", callback_data=f"zone_view:{zone_id}")
+        InlineKeyboardButton(text="🔙 Назад", callback_data=f"subzone_view:{zone_id}")
     ])
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
