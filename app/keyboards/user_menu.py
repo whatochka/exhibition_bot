@@ -25,6 +25,7 @@ def user_navigation_keyboard(prev_id: int | None, next_id: int | str | None) -> 
 
 
 def subzones_keyboard(subzones: list[Subzone], prev_id: int | None, next_id: int | str | None) -> InlineKeyboardMarkup:
+    subzones = sorted(subzones, key=lambda s: s.id)  # сортируем по id
     keyboard = [
         [InlineKeyboardButton(text=subzone.title, callback_data=f"user_subzone:{subzone.id}")]
         for subzone in subzones
@@ -40,6 +41,7 @@ def subzones_keyboard(subzones: list[Subzone], prev_id: int | None, next_id: int
 
 
 def items_keyboard(items: list[Item], back_cb: str = "user_items_back") -> InlineKeyboardMarkup:
+    items = sorted(items, key=lambda i: i.id)  # сортируем по id
     keyboard = []
     for item in items:
         cb = f"user_item:{item.id}:{back_cb}"
