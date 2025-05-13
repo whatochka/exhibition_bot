@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from sqlalchemy import select
 
@@ -40,12 +40,44 @@ async def user_start(message: Message, state: FSMContext):
         if payload.startswith("zone_"):
             zone_id = int(payload.replace("zone_", ""))
             return await open_zone(message, state, zone_id, zones)
+        elif payload.startswith("subzone_"):
+            subzone_id = int(payload.replace("subzone_", ""))
+            return await open_subzone_direct(message, state, subzone_id)
 
     await message.answer(
         '👋 <b>Добро пожаловать на интерактивную выставку!</b>\n33 года — это вам не шутки. Студенческий союз МИРЭА прошёл огонь, воду и море поточки. Готовы посмотреть, как это было?\n\n'
         '🚩 Чтобы начать это путешествие во времени — подойдите к первой зоне и жмите <b>«Начать»</b>. Не переживайте, обратно вернётесь без машины времени!)',
         reply_markup=zones_keyboard(zones, is_admin=is_admin)
     )
+
+
+async def open_subzone_direct(message: Message, state: FSMContext, subzone_id: int):
+    async with SessionLocal() as session:
+        subzone = await session.get(Subzone, subzone_id)
+        if not subzone:
+            await message.answer("❗️Подзона не найдена.")
+            return
+
+        items = (await session.execute(
+            select(Item).where(Item.subzone_id == subzone_id)
+        )).scalars().all()
+
+    await state.update_data(current_zone_id=subzone.zone_id)
+    await state.update_data(current_subzone_id=subzone.id)
+
+    keyboard = items_keyboard(items, back_cb=f"zone_open:{subzone.zone_id}")
+
+    try:
+        await message.delete()
+    except:
+        pass
+
+    if subzone.photo:
+        await message.answer_photo(photo=subzone.photo, caption=f"<b>{subzone.title}</b>\n\n{subzone.description}",
+                                   parse_mode="HTML", reply_markup=keyboard)
+    else:
+        await message.answer(text=f"<b>{subzone.title}</b>\n\n{subzone.description}", parse_mode="HTML",
+                             reply_markup=keyboard)
 
 
 @user_router.callback_query(F.data.startswith("zone_open:"))
